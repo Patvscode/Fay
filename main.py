@@ -114,7 +114,13 @@ def cleanup_on_exit():
         util.log(1, '程序退出，正在清理资源...')
         if fay_booter.is_running():
             fay_booter.stop()
-        
+
+        # These WebSocket servers are started by main rather than fay_booter,
+        # so stop their event loops explicitly before the thread manager runs.
+        for websocket_server in (wsa_server.get_instance(), wsa_server.get_web_instance()):
+            if websocket_server is not None:
+                websocket_server.stop_server()
+
         # 停止所有自定义线程
         try:
             from scheduler.thread_manager import stopAll
