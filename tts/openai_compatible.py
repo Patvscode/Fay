@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import os
 import time
+import logging
 from pathlib import Path
 
 import requests
 
-from utils import util
+
+LOG = logging.getLogger(__name__)
 
 
 class Speech:
@@ -61,5 +63,5 @@ class Speech:
             file_url.write_bytes(response.content)
             return str(file_url)
         except Exception as exc:
-            util.log(1, f"[x] OpenAI-compatible speech conversion failed: {exc}")
+            LOG.exception("OpenAI-compatible speech conversion failed: %s", exc)
             return None
