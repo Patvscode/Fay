@@ -195,9 +195,11 @@ class MyServer:
         if self.__server:
             util.log(1, 'server already exist')
             return
-        self.__server = websockets.serve(self.__handler, self.__host, self.__port, ping_interval=10, ping_timeout=5)
-        asyncio.get_event_loop().run_until_complete(self.__server)
-        asyncio.get_event_loop().run_forever()
+        server_factory = websockets.serve(
+            self.__handler, self.__host, self.__port, ping_interval=10, ping_timeout=5
+        )
+        self.__server = self.__event_loop.run_until_complete(server_factory)
+        self.__event_loop.run_forever()
 
     # 往要发送的命令列表中，添加命令
     def add_cmd(self, content):

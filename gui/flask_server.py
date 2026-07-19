@@ -1919,14 +1919,27 @@ def api_execution_modify():
         return jsonify({'error': str(e)}), 500
 
 
+_http_server = None
+
+
 def run():
+    global _http_server
     class NullLogHandler:
         def write(self, *args, **kwargs):
             pass
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
     from werkzeug.serving import make_server
-    server = make_server(os.environ.get('FAY_BIND_HOST', '0.0.0.0'), 5000, __app, threaded=True)
-    server.serve_forever()
+    _http_server = make_server(os.environ.get('FAY_BIND_HOST', '0.0.0.0'), 5000, __app, threaded=True)
+    try:
+        _http_server.serve_forever()
+    finally:
+        _http_server = None
+
+
+def stop():
+    server = _http_server
+    if server is not None:
+        server.shutdown()
 
 def start():
     MyThread(target=run).start()

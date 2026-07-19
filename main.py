@@ -121,6 +121,13 @@ def cleanup_on_exit():
             if websocket_server is not None:
                 websocket_server.stop_server()
 
+        flask_server.stop()
+        try:
+            from faymcp import mcp_service
+            mcp_service.stop()
+        except Exception as exc:
+            util.log(1, f'MCP HTTP service stop warning: {exc}')
+
         # 停止所有自定义线程
         try:
             from scheduler.thread_manager import stopAll
