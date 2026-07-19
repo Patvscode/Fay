@@ -216,9 +216,20 @@ class MyServer:
     def stop_server(self):
         self.__running = False
         self.isConnect = False
-        if self.__server is None:
-            return
-        self.__server.close()
+        server = self.__server
+        event_loop = self.__event_loop
+        if server is not None and event_loop is not None and event_loop.is_running():
+            async def close_server():
+                server.close()
+                await server.wait_closed()
+
+            try:
+                future = asyncio.run_coroutine_threadsafe(close_server(), event_loop)
+                future.result(timeout=3)
+            except Exception as exc:
+                util.log(1, f"WebSocket server close warning: {exc}")
+            finally:
+                event_loop.call_soon_threadsafe(event_loop.stop)
         self.__server = None
         self.__clients = []
         util.log(1, "WebSocket server stopped.")
