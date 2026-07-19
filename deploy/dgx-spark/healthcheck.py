@@ -38,7 +38,7 @@ def main() -> int:
         checks[name] = tcp_ready(host, port)
 
     for name, url in (
-        ("llm_router", "http://127.0.0.1:5055/v1/models"),
+        ("llm_router", os.environ.get("FAY_LLM_HEALTH_URL", "http://127.0.0.1:5055/v1/models")),
         ("voxtral_asr", "http://127.0.0.1:4395/v1/models"),
         ("voxtral_tts", "http://127.0.0.1:4396/v1/models"),
     ):
