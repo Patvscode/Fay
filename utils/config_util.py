@@ -348,8 +348,12 @@ def load_config(force_reload=False):
     ):
         return _last_loaded_config
 
-    default_system_conf_path = os.path.join(os.getcwd(), 'system.conf')
-    default_config_json_path = os.path.join(os.getcwd(), 'config.json')
+    default_system_conf_path = os.path.abspath(
+        os.path.expanduser(os.getenv('FAY_SYSTEM_CONF_PATH', os.path.join(os.getcwd(), 'system.conf')))
+    )
+    default_config_json_path = os.path.abspath(
+        os.path.expanduser(os.getenv('FAY_CONFIG_JSON_PATH', os.path.join(os.getcwd(), 'config.json')))
+    )
     cache_system_conf_path = os.path.join(os.getcwd(), 'cache_data', 'system.conf')
     cache_config_json_path = os.path.join(os.getcwd(), 'cache_data', 'config.json')
     root_system_conf_exists = env_system_config is not None or os.path.exists(default_system_conf_path)

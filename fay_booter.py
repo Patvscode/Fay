@@ -220,7 +220,7 @@ def accept_audio_device_output_connect():
     global __running
     global DeviceInputListenerDict
     deviceSocketServer = socket.socket(socket.AF_INET,socket.SOCK_STREAM) 
-    deviceSocketServer.bind(("0.0.0.0",10001))   
+    deviceSocketServer.bind((os.environ.get("FAY_BIND_HOST", "0.0.0.0"),10001))
     deviceSocketServer.listen(1)
     MyThread(target = device_socket_keep_alive).start() # 开启心跳包检测
     addr = None        

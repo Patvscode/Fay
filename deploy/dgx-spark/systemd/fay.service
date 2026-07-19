@@ -1,0 +1,18 @@
+[Unit]
+Description=Fay digital-human and MCP runtime
+After=network-online.target fay-asr-proxy.service codex-studio-voxtral-tts.service local-model-coordinator.service spark-studio.service
+Wants=network-online.target fay-asr-proxy.service codex-studio-voxtral-tts.service local-model-coordinator.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Workspace/01_Projects/Active/Fay
+EnvironmentFile=%h/.config/fay/fay.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=%h/Workspace/01_Projects/Active/Fay/.venv/bin/python main.py start
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+KillMode=mixed
+
+[Install]
+WantedBy=default.target

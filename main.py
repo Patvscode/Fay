@@ -282,11 +282,12 @@ if __name__ == '__main__':
     contentdb.init_db()
 
     #启动数字人接口服务
-    ws_server = wsa_server.new_instance(port=10002)
+    bind_host = os.environ.get("FAY_BIND_HOST", "0.0.0.0")
+    ws_server = wsa_server.new_instance(host=bind_host, port=10002)
     ws_server.start_server()
 
     #启动UI数据接口服务
-    web_ws_server = wsa_server.new_web_instance(port=10003)
+    web_ws_server = wsa_server.new_web_instance(host=bind_host, port=10003)
     web_ws_server.start_server()
 
     #启动阿里云asr

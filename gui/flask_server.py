@@ -1922,7 +1922,7 @@ def run():
             pass
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
     from werkzeug.serving import make_server
-    server = make_server('0.0.0.0', 5000, __app, threaded=True)
+    server = make_server(os.environ.get('FAY_BIND_HOST', '0.0.0.0'), 5000, __app, threaded=True)
     server.serve_forever()
 
 def start():
