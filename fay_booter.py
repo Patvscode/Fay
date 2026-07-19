@@ -3,7 +3,10 @@ import time
 import os
 import re
 import asyncio
-import pyaudio
+try:
+    import pyaudio
+except ImportError:
+    pyaudio = None
 import socket
 import requests
 from core.interact import Interact
@@ -42,7 +45,7 @@ class RecorderListener(Recorder):
 
     def __init__(self, device, fei):
         self.__device = device
-        self.__FORMAT = pyaudio.paInt16
+        self.__FORMAT = pyaudio.paInt16 if pyaudio is not None else 8
         self.__running = False
         self.username = 'User'
         # 这两个参数会在 get_stream 中根据实际设备更新
@@ -64,6 +67,9 @@ class RecorderListener(Recorder):
                 if record['enabled']:
                     break
                 time.sleep(0.1)
+
+            if pyaudio is None:
+                raise RuntimeError("PyAudio is not installed; use remote audio or install PortAudio before enabling the local microphone")
     
             self.paudio = pyaudio.PyAudio()
             

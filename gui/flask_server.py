@@ -3,7 +3,10 @@ import importlib
 import json
 import time
 import os
-import pyaudio
+try:
+    import pyaudio
+except ImportError:
+    pyaudio = None
 import re
 from flask import Flask, render_template, request, jsonify, Response, send_file, stream_with_context
 from flask_cors import CORS
@@ -94,7 +97,7 @@ def __get_template():
 
 def __get_device_list():
     try:
-        if config_util.start_mode == 'common':
+        if config_util.start_mode == 'common' and pyaudio is not None:
             audio = pyaudio.PyAudio()
             device_list = []
             for i in range(audio.get_device_count()):

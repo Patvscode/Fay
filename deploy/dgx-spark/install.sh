@@ -13,7 +13,7 @@ fi
 
 python3 -m venv --system-site-packages "$ROOT/.venv"
 "$ROOT/.venv/bin/python" -m pip install --upgrade 'pip>=25,<27'
-"$ROOT/.venv/bin/python" -m pip install -r "$ROOT/requirements.txt" starlette sse-starlette uvicorn
+"$ROOT/.venv/bin/python" -m pip install -r <(grep -vE '^[[:space:]]*pyaudio([<>=~!]|$)' "$ROOT/requirements.txt") starlette sse-starlette uvicorn
 
 mkdir -p "$CONFIG_DIR" "$DATA_DIR" "$UNIT_DIR" "$ROOT/cache_data" "$ROOT/samples"
 
