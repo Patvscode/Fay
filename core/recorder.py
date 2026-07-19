@@ -410,6 +410,9 @@ class Recorder:
         self.__thread = MyThread(target=self.__record)
         self.__thread.start()
 
+    def should_run(self):
+        return self.__running
+
     def stop(self):
         self.__running = False
         if self.__thread is not None and self.__thread.is_alive():

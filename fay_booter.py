@@ -61,12 +61,15 @@ class RecorderListener(Recorder):
 
     def get_stream(self):
         try:
-            while True:
+            while self.should_run():
                 config_util.load_config()
                 record = config_util.config['source']['record']
                 if record['enabled']:
                     break
                 time.sleep(0.1)
+
+            if not self.should_run():
+                return None
 
             if pyaudio is None:
                 raise RuntimeError("PyAudio is not installed; use remote audio or install PortAudio before enabling the local microphone")
@@ -225,9 +228,11 @@ def accept_audio_device_output_connect():
     global deviceSocketServer
     global __running
     global DeviceInputListenerDict
-    deviceSocketServer = socket.socket(socket.AF_INET,socket.SOCK_STREAM) 
+    deviceSocketServer = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    deviceSocketServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     deviceSocketServer.bind((os.environ.get("FAY_BIND_HOST", "0.0.0.0"),10001))
     deviceSocketServer.listen(1)
+    deviceSocketServer.settimeout(1.0)
     MyThread(target = device_socket_keep_alive).start() # 开启心跳包检测
     addr = None        
     
