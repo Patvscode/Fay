@@ -17,7 +17,7 @@ The services bind to the Spark's Tailscale address by default. They are not expo
 |---|---:|---|
 | HTTP control/API | 5000 | Configuration, chat, status, and audio files |
 | MCP administration | 5010 | Manage Fay's upstream MCP connections |
-| MCP SSE | 8765 | Connect external agents to Fay |
+| MCP SSE | 8766 | Connect external agents to Fay |
 | Remote voice WebSocket | 9001 | Remote microphone/speaker bridge |
 | Remote voice TCP | 10001 | Native remote audio transport |
 | Avatar WebSocket | 10002 | Audio, text, action, emotion, and lip data |

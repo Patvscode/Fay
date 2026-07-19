@@ -32,7 +32,7 @@ def main() -> int:
         ("panel_websocket", bind_host, 10003),
         ("remote_audio", bind_host, 9001),
         ("mcp_admin", bind_host, 5010),
-        ("mcp_sse", bind_host, 8765),
+        ("mcp_sse", bind_host, int(os.environ.get("FAY_MCP_SSE_PORT", "8766"))),
         ("asr_proxy", "127.0.0.1", 10197),
     ):
         checks[name] = tcp_ready(host, port)
