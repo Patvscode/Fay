@@ -841,12 +841,15 @@ def _build_planner_messages(state: AgentState) -> List[SystemMessage | HumanMess
         '\n- 感谢道别：谢谢、再见、拜拜'
         '\n- 简单确认：好的、收到、明白了'
         '\n- 对你上一句话的回应：哈哈、对的、没错、说得好'
+        '\n- 让你直接说一句话、问候某人、改写、总结或翻译用户已经提供的文字'
+        '\n- 仅仅提到人名、产品名或项目名，但没有询问外部事实、也没有要求执行外部操作'
         '\n\n什么不是闲聊（输出 tool）：'
         '\n- 问任何具体事物/概念：XX是什么、你知道XX吗'
         '\n- 要求查询/获取/阅读内容'
         '\n- 提到任何产品名、项目名、专有名词'
         '\n- 任何你需要查资料才能准确回答的问题'
         '\n- 用户的问题涉及下方"可用工具"或"知识库主题"中的任何内容'
+        '\n- 只有确实需要外部信息或执行外部操作时才输出 tool；不要因为一句话里出现专有名词就输出 tool'
         '\n\nkeyword 提取规则：'
         '\n- keyword 必须是具体的搜索主题词，不能是"再查一下""详细说说"等动作描述'
         '\n- 如果用户消息是指代性的（如"再查一下""继续""详细说说"），从对话历史中找到实际话题作为 keyword'
@@ -3069,7 +3072,7 @@ def question(content, username, observation=None):
     def _on_tool_detected() -> None:
         """流式中检测到 tool action → 立即推送过渡语给用户"""
         nonlocal is_first_sentence
-        write_sentence("我来帮你查一下，稍等…\n", force_first=is_first_sentence)
+        write_sentence("I’ll check that for you—one moment…\n", force_first=is_first_sentence)
         is_first_sentence = False
 
     try:
@@ -3080,7 +3083,7 @@ def question(content, username, observation=None):
         )
     except Exception as llm_err:
         util.log(1, f"[大小模型] {username}: 规划器LLM调用失败: {llm_err}")
-        error_reply = "抱歉，我的大脑暂时开了小差，请稍后再试一下。"
+        error_reply = "Sorry, I hit a temporary reasoning error. Please try again in a moment."
         write_sentence(error_reply, force_first=is_first_sentence)
         if not sm.should_stop_generation(username, conversation_id=conversation_id):
             finalize_stream(force_end=True)
@@ -3098,7 +3101,7 @@ def question(content, username, observation=None):
         util.log(1, f"[大小模型] {username}: 需调用工具 {t_name}，提交后台执行")
 
         if show_plan_msg:
-            plan_msg = "我来帮你查一下，稍等…\n"
+            plan_msg = "I’ll check that for you—one moment…\n"
             write_sentence(plan_msg, force_first=is_first_sentence)
             is_first_sentence = False
 
@@ -3126,7 +3129,7 @@ def question(content, username, observation=None):
         if exec_mgr.submit(exec_state):
             util.log(1, f"[大小模型] {username}: 后台任务已提交，等待执行完成")
         else:
-            transit_reply = "你有一个任务还在执行中，请等它完成后再试。"
+            transit_reply = "Another task is still running. Please wait for it to finish and try again."
             write_sentence(transit_reply)
             if not sm.should_stop_generation(username, conversation_id=conversation_id):
                 finalize_stream(force_end=True)
@@ -3168,7 +3171,7 @@ def question(content, username, observation=None):
                 write_sentence(accumulated_text, force_first=is_first_sentence)
                 is_first_sentence = False
                 accumulated_text = ""
-            verify_msg = "\n\n等等，我再帮你核实一下…\n\n---\n"
+            verify_msg = "\n\nLet me verify that before I answer…\n\n---\n"
             write_sentence(verify_msg)
             full_response_text += verify_msg
             # 不硬编码工具，交由大模型基于 unverified_response 自行选择核实工具
