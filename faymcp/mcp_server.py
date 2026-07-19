@@ -18,6 +18,7 @@ Fay broadcast MCP server (SSE transport).
 import asyncio
 import logging
 import os
+import re
 import sys
 import json
 from typing import Any, Dict, Tuple, List, Optional
@@ -327,7 +328,7 @@ def _parse_arguments(arguments: Dict[str, Any]) -> Tuple[str, str, str, str, boo
 def _build_aggregated_tools() -> List[Tool]:
     """
     将 Fay 已连接的 MCP 工具聚合，对外暴露为 namespaced 名称：
-    <server_id>:<tool_name>
+    server_<server_id>__<tool_name>
     """
     tools: List[Tool] = []
     _aggregated_index.clear()
@@ -339,7 +340,8 @@ def _build_aggregated_tools() -> List[Tool]:
         tool_name = entry.get("name")
         if server_id is None or not tool_name:
             continue
-        agg_name = f"{server_id}:{tool_name}"
+        safe_tool_name = re.sub(r"[^A-Za-z0-9_.-]", "_", str(tool_name))
+        agg_name = f"server_{server_id}__{safe_tool_name}"
         desc = entry.get("description", "")
         server_label = server_name_map.get(server_id, f"Server {server_id}")
         agg_desc = f"{desc} [via {server_label}]"
