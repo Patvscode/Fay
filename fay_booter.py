@@ -331,7 +331,8 @@ def stop():
     # 保存代理记忆
     util.log(1, '正在保存代理记忆...')
     try:
-        from llm.nlp_cognitive_stream import save_agent_memory
+        from llm.nlp_cognitive_stream import save_agent_memory, stop_memory_scheduler
+        stop_memory_scheduler()
         save_agent_memory()
         util.log(1, '代理记忆保存成功')
     except Exception as e:

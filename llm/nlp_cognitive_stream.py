@@ -1729,20 +1729,35 @@ def get_knowledge_base():
 
 
 # 定时保存记忆的线程
+_memory_scheduler_stop_event = threading.Event()
+_memory_scheduler_thread_instance = None
+
+
 def memory_scheduler_thread():
     """
     定时任务线程，运行schedule调度器
     """
-    while True:
+    while not _memory_scheduler_stop_event.wait(60):
         schedule.run_pending()
-        time.sleep(60)  # 每分钟检查一次是否有定时任务需要执行
+
+
+def stop_memory_scheduler():
+    global _memory_scheduler_thread_instance
+    _memory_scheduler_stop_event.set()
+    thread = _memory_scheduler_thread_instance
+    if thread is not None and thread.is_alive():
+        thread.join(timeout=2)
+    _memory_scheduler_thread_instance = None
 
 # 初始化定时保存记忆的任务
 def init_memory_scheduler():
     """
     初始化定时保存记忆的任务
     """
-    global agents
+    global agents, _memory_scheduler_thread_instance
+
+    if _memory_scheduler_thread_instance is not None and _memory_scheduler_thread_instance.is_alive():
+        return
     
     # 确保agent已经创建
     agent = None
@@ -1769,17 +1784,19 @@ def init_memory_scheduler():
         util.log(1, f"启动阶段 embedding 维度检查失败: {str(e)}")
     
     # 设置每天0点保存记忆
-    schedule.every().day.at("00:00").do(save_agent_memory)
+    schedule.clear("fay-memory")
+    schedule.every().day.at("00:00").do(save_agent_memory).tag("fay-memory")
 
     # 设置每天晚上11点执行反思
-    schedule.every().day.at("23:00").do(perform_daily_reflection)
+    schedule.every().day.at("23:00").do(perform_daily_reflection).tag("fay-memory")
 
     # 设置执行用户画像分析（测试用11:30，正式改回22:35）
-    schedule.every().day.at("11:30").do(perform_user_portrait_analysis)
+    schedule.every().day.at("11:30").do(perform_user_portrait_analysis).tag("fay-memory")
 
     # 启动定时任务线程
-    scheduler_thread = MyThread(target=memory_scheduler_thread)
-    scheduler_thread.start()
+    _memory_scheduler_stop_event.clear()
+    _memory_scheduler_thread_instance = MyThread(target=memory_scheduler_thread)
+    _memory_scheduler_thread_instance.start()
 
     util.log(1, '定时任务已启动：每天0点保存记忆，每天11:30用户画像分析，每天23点执行反思')
 

@@ -54,6 +54,7 @@ class Recorder:
         self.__last_ws_notify_time = 0
         self.__ws_notify_interval = 0.5  # 最小通知间隔（秒）
         self.__ws_notify_thread = None
+        self.__thread = None
 
     def asrclient(self):
         if self.ASRMode == "ali":
@@ -406,10 +407,14 @@ class Recorder:
         self.__processing = processing
 
     def start(self):
-        MyThread(target=self.__record).start()
+        self.__thread = MyThread(target=self.__record)
+        self.__thread.start()
 
     def stop(self):
         self.__running = False
+        if self.__thread is not None and self.__thread.is_alive():
+            self.__thread.join(timeout=2)
+        self.__thread = None
 
     @abstractmethod
     def on_speaking(self, text):

@@ -164,8 +164,9 @@ def signal_handler(signum, frame):
     cleanup_thread = threading.Thread(target=cleanup_and_exit, daemon=True)
     cleanup_thread.start()
     
-    # 如果清理线程超过5秒还没完成，强制退出
-    cleanup_thread.join(timeout=5.0)
+    # Stay within systemd's 20-second stop budget while allowing memory and
+    # subprocess cleanup to finish on a busy host.
+    cleanup_thread.join(timeout=15.0)
     if cleanup_thread.is_alive():
         util.log(1, '清理超时，立即强制退出...')
         os._exit(1)
