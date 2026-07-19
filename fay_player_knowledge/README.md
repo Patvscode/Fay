@@ -1,32 +1,33 @@
-# Fay 课程知识库
+# Fay Course Knowledge Base
 
-本目录存放 Fay 的课程知识包（`.zip` 格式），由「课程知识库」MCP server（`mcp_servers/fay_player_knowledge/`）加载，供 Fay 在对话中检索引用。
+This directory contains Fay course knowledge packages in `.zip` format. The Course Knowledge Base MCP server in `mcp_servers/fay_player_knowledge/` loads these packages so Fay can search and cite them during conversations.
 
-## 课程包来源
+## Creating course packages
 
-所有课程包均可在 **[https://player.fay-agent.com](https://player.fay-agent.com)** 在线创建或浏览，主要功能：
+Use [Fay Player](https://player.fay-agent.com) to create or browse course packages. It supports:
 
-- 🌐 **浏览 / 创建** 课程知识包
-- ▶️ **在线播放** 课程内容
-- 🎬 **导出视频** 一键将课程包生成讲解视频
-- 📄 **导出 Markdown 文档** 将课程内容转为 md 文档
-- 🆓 **完全开源** 项目地址：[https://gitee.com/xszyou/fay-player](https://gitee.com/xszyou/fay-player)
+- Browsing and creating course knowledge packages
+- Playing course content online
+- Exporting a course as an explanatory video
+- Exporting course content as a Markdown document
 
-下载得到的 `.zip` 放入本目录，即可被 Fay 引用。
+Fay Player is fully open source at [gitee.com/xszyou/fay-player](https://gitee.com/xszyou/fay-player).
 
-## 当前包含的课程
+Place downloaded `.zip` packages in this directory to make them available to Fay.
 
-| 课程包 | 简介 |
+## Included courses
+
+| Course package | Description |
 | --- | --- |
-| Fay介绍（面向开发者）.zip | Fay 数字人框架的整体架构与开发者上手指南 |
-| Fay多用户对话消息分发逻辑.zip | 多用户场景下消息分发与会话隔离机制 |
-| Fay的think标签处理逻辑.zip | `<think>` 标签从产生到记忆归档的全链路 |
-| Fay的prestart标签处理逻辑.zip | `<prestart>` 标签的注册、调度与双通道注入 |
-| OfficeEcho-course.zip | OfficeEcho 示例课程 |
+| `Fay介绍（面向开发者）.zip` | Overview of the Fay digital-human architecture and a developer getting-started guide |
+| `Fay多用户对话消息分发逻辑.zip` | Message routing and session isolation in multi-user scenarios |
+| `Fay的think标签处理逻辑.zip` | The complete lifecycle of `<think>` tags, from generation through memory archiving |
+| `Fay的prestart标签处理逻辑.zip` | Registration, scheduling, and dual-channel injection of `<prestart>` tags |
+| `OfficeEcho-course.zip` | Example OfficeEcho course |
 
-## 使用方式
+## Usage
 
-1. 在 [https://player.fay-agent.com](https://player.fay-agent.com) 创建或下载课程包；
-2. 将 `.zip` 文件放入本目录；
-3. 启动 Fay 后，「课程知识库」MCP server 会自动加载并向 Fay 暴露 `search` / `get_section` 工具；
-4. 与 Fay 对话时即可让它检索这些知识。
+1. Create or download a package from [Fay Player](https://player.fay-agent.com).
+2. Put the `.zip` file in this directory.
+3. Start Fay. The Course Knowledge Base MCP server loads the package and exposes the `search` and `get_section` tools.
+4. Ask Fay to retrieve the course knowledge during a conversation.
