@@ -7,7 +7,7 @@ tts_module=openai
 
 gpt_api_key=local-spark
 gpt_base_url=http://127.0.0.1:5055/v1
-gpt_model_engine=qwen3.5:9b
+gpt_model_engine=gemma4:12b-q4
 big_model_engine=
 big_model_base_url=
 big_model_api_key=

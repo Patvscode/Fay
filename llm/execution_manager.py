@@ -9,6 +9,7 @@
 
 import enum
 import json
+import os
 import re
 import threading
 import time
@@ -176,6 +177,7 @@ def _get_llm_instance(role: str = "small", streaming: bool = True) -> ChatOpenAI
     role="small" → 使用 system.conf 中的 gpt_* 配置
     """
     cfg.load_config()
+    max_tokens = max(128, int(os.environ.get("FAY_LLM_MAX_TOKENS", "1024")))
 
     if role == "big":
         if cfg.big_model_engine:
@@ -187,6 +189,7 @@ def _get_llm_instance(role: str = "small", streaming: bool = True) -> ChatOpenAI
                 base_url=actual_base_url,
                 api_key=actual_api_key,
                 streaming=streaming,
+                max_tokens=max_tokens,
                 timeout=120,
                 max_retries=2,
             )
@@ -200,6 +203,7 @@ def _get_llm_instance(role: str = "small", streaming: bool = True) -> ChatOpenAI
         base_url=cfg.gpt_base_url,
         api_key=cfg.key_gpt_api_key,
         streaming=streaming,
+        max_tokens=max_tokens,
         timeout=60,
         max_retries=1,
     )
