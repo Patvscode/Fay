@@ -1,48 +1,42 @@
-
 <div align="center">
     <br>
     <img src="readme/icon.png" alt="Fay">
     <h1>FAY</h1>
-	<h3>Fay数字人框架</h3>
+    <h3>Fay Digital Human Framework</h3>
 </div>
 
-！！重要通知：我们已经把Fay的三个版本合并成1个，并致力提供更稳定更全面的功能。
+> **Important:** Fay's three editions have been merged into a single version so the project can provide a more stable and complete feature set.
 
-我们致力于思考面向终端的数字人落地应用，并通过完整代码把思考结果呈现给大家。Fay数字人框架，向上适配各种数字人模型技术，向下接入各式大语言模型，并且便于更换诸如TTS、ASR等模型，为单片机、app、网站提供全面的数字人应用接口。      
-更新日志：https://qqk9ntwbcit.feishu.cn/wiki/UlbZwfAXgiKSquk52AkcibhHngg
-文档：https://qqk9ntwbcit.feishu.cn/wiki/JzMJw7AghiO8eHktMwlcxznenIg
+Fay explores practical, device-oriented digital-human applications and makes those ideas available as a complete open-source implementation. The framework can work with a variety of digital-human rendering technologies and large language models, makes components such as TTS and ASR easy to replace, and exposes a comprehensive set of APIs for microcontrollers, apps, websites, and other products.
 
+- [Changelog](https://qqk9ntwbcit.feishu.cn/wiki/UlbZwfAXgiKSquk52AkcibhHngg)
+- [Documentation](https://qqk9ntwbcit.feishu.cn/wiki/JzMJw7AghiO8eHktMwlcxznenIg)
 
-## **功能特点**
+## Features
 
+- Completely open source and available for commercial use without liability
+- Fully offline operation
+- End-to-end streaming support
+- Mix and match digital-human models, OpenAI-compatible LLMs, ASR engines, and TTS engines
+- Automatic digital-human presentation modes for virtual teachers, virtual hosts, and news broadcasts
+- Integration with microcontrollers, apps, websites, large displays, and third-party business systems
+- Concurrent multi-user and multi-channel operation
+- APIs for text interaction, voice interaction, digital-human control, administration, automatic announcements, and intent handling
+- Configurable voice-command actions through `qa.csv`
+- Custom knowledge bases, question-and-answer pairs, and character profiles
+- Wake-word support and interruptible conversations
+- Server and standalone modes
+- Robot facial-expression output
+- Agent-driven tool selection and execution
+- Proactive, schedule-based conversations
+- Silent background startup
+- Support for reasoning models such as DeepSeek
+- Improved self-awareness and biomimetic memory
+- MCP tool management over SSE and stdio
+- A central configuration-management interface
+- End-to-end interoperability across the interaction pipeline
 
-
-- 完全开源，商用免责
-- 支持全离线使用
-- 全时流式的支持
-- 自由匹配数字人模型、大语言模型（openai 兼容接口）、ASR、TTS模型
-- 支持数字人自动播报模式（虚拟教师、虚拟主播、新闻播报）
-- 支持任意终端使用：单片机、app、网站、大屏、三方业务系统接入等
-- 支持多用户多路并发
-- 提供文字交互接口、语音交互接口、数字人驱动接口、管理控制接口、自动播报接口、意图接口
-- 支持语音指令灵活配置执行（qa.csv）
-- 支持自定义知识库、自定义问答对、自定义人设信息
-- 支持唤醒及打断对话
-- 支持服务器及单机模式
-- 支持机器人表情输出
-- 支持agent自主决策工具调用
-- 基于日程式数字人主动对话
-- 支持后台静默启动
-- 支持deepseek等thinking llm
-- 自我认知提高
-- 仿生记忆
-- 支持MCP工具管理（sse、studio）
-- 提供配置管理中心
-- 全链路交互互通
-
-###               
-
-## **Fay数字人框架**
+## Framework preview
 
 ![](readme/chat.png)
 
@@ -50,83 +44,70 @@
 
 ![](readme/mcp.png)
 
+## Run from source
 
+### Requirements
 
-
-
-
-## **源码启动**
-
-
-### **环境** 
 - Python 3.12
+- Windows, macOS, or Ubuntu
+- On Ubuntu, install GCC and PortAudio first:
 
-- Windows、macos、ubuntu
+```bash
+sudo apt update
+sudo apt install build-essential
+sudo apt install portaudio19-dev
+```
 
-- 注：ubuntu需要先安装gcc及portaudio
-
-- ````bash
-  sudo apt update
-  sudo apt install build-essential
-  sudo apt install portaudio19-dev
-  ````
-
-  
-
-### **安装依赖**
+### Install dependencies
 
 ```shell
 pip install -r requirements.txt
 ```
 
+### Quick start
 
-### **快速启动**
-本地
+Run locally:
+
 ```shell
-python main.py start -config_center d19f7b0a-2b8a-4503-8c0d-1a587b90eb69  #使用公共资源，速度非常慢，建议更换成自己的key
+python main.py start -config_center d19f7b0a-2b8a-4503-8c0d-1a587b90eb69  # Uses slow public resources; replace this with your own key.
 ```
-镜像
-```shell
+
+Prebuilt image:
+
+```text
 https://www.compshare.cn/images/compshareImage-1cft3sk9gvta?ytag=GPU_fay
 ```
 
-### **个性化配置**
-+ 根目录system.conf.bak 重命名为system.conf，并配置里面的内容
+### Personal configuration
 
-### **管理页面**
-+ 浏览器访问 http://127.0.0.1:5000
+Rename `system.conf.bak` in the repository root to `system.conf`, then edit its settings.
 
-## **高级玩法**
+### Administration page
+
+Open <http://127.0.0.1:5000> in a browser.
+
+## Advanced usage
 
 ![](readme/interface.png)
 
+### Use a digital-human renderer (optional)
 
+<https://qqk9ntwbcit.feishu.cn/wiki/GHevwqxwfiX4hCk8yJCcoJ54nqg>
 
-### ***使用数字人（非必须）***
-https://qqk9ntwbcit.feishu.cn/wiki/GHevwqxwfiX4hCk8yJCcoJ54nqg
+### Integrate Fay into your own product (optional)
 
+<https://qqk9ntwbcit.feishu.cn/wiki/Mcw3wbA3RiNZzwkexz6cnKCsnhh>
 
+## Contact
 
+For the community group, learning materials, and tutorials, follow the **Fay Digital Human** public account. Please star this repository first.
 
-### ***集成到自家产品（非必须）***
-https://qqk9ntwbcit.feishu.cn/wiki/Mcw3wbA3RiNZzwkexz6cnKCsnhh
+Business contact: QQ 467665317
 
+## Acknowledgements
 
+Fay thanks the following open-source projects for their technical support and inspiration:
 
-### **联系**
-
-**交流群及资料教程**关注公众号 **fay数字人**（**请先star本仓库**）
-
-
-**商务联系**
-
-qq467665317
-
-
-## **致谢**
-
-感谢以下开源项目为 Fay 提供的技术支持：
-
-- [openclaw](https://github.com/openclaw/openclaw) - 提供记忆机制及skills设计的参考
-- [OpenAI Codex](https://github.com/openai/codex) - 提供稳定的工具调用能力的参考
-- [FunASR](https://github.com/modelscope/FunASR) - 提供语音识别（ASR）能力
+- [openclaw](https://github.com/openclaw/openclaw) — reference for memory mechanisms and skill design
+- [OpenAI Codex](https://github.com/openai/codex) — reference for reliable tool calling
+- [FunASR](https://github.com/modelscope/FunASR) — speech-recognition (ASR) capabilities
