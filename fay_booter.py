@@ -3,6 +3,7 @@ import time
 import os
 import re
 import asyncio
+import threading
 try:
     import pyaudio
 except ImportError:
@@ -28,6 +29,7 @@ ngrok = None
 socket_service_instance = None
 mcp_sse_server = None
 mcp_sse_thread = None
+_shutdown_event = threading.Event()
 # 是否启用内置 MCP SSE 服务器（默认关闭，需显式开启以避免端口/代理问题）
 mcp_sse_enabled = True
 
@@ -221,7 +223,7 @@ def device_socket_keep_alive():
              value =  DeviceInputListenerDict.pop(delkey)
              if wsa_server.get_web_instance().is_connected(value.username):
                 wsa_server.get_web_instance().add_cmd({"remote_audio_connect": False, "Username" : value.username})
-        time.sleep(10)
+        _shutdown_event.wait(10)
 
 #远程音频连接
 def accept_audio_device_output_connect():
@@ -309,6 +311,7 @@ def stop():
 
     util.log(1, '正在关闭服务...')
     __running = False
+    _shutdown_event.set()
 
     # 关闭 MCP SSE 服务
     try:
@@ -372,6 +375,11 @@ def stop():
         pass
 
     util.log(1, '正在关闭核心服务...')
+    try:
+        from core import stream_manager
+        stream_manager.new_instance().stop()
+    except Exception as e:
+        util.log(1, f'关闭文本流监听服务时异常: {e}')
     feiFei.stop()
     util.log(1, '服务已关闭！')
 
@@ -387,6 +395,7 @@ def start():
     
     util.log(1, '开启服务...')
     __running = True
+    _shutdown_event.clear()
 
     #读取配置
     util.log(1, '读取配置...')
