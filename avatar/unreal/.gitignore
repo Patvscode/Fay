@@ -1,0 +1,24 @@
+# Unreal generated project output
+**/Binaries/
+**/DerivedDataCache/
+**/Intermediate/
+**/Saved/
+
+# Local records derived from Epic's licensed Unreal Engine source belong in a
+# licensed/private Unreal workspace, not in this public Fay repository.
+spark-engine/
+
+# Generated IDE and platform files
+.vs/
+.idea/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.xcodeproj/
+
+# Local crash and log output
+*.log
+crashinfo-*/
+.DS_Store
