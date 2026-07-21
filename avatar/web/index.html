@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#070b12" />
+    <title>Fay Avatar</title>
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="scene" aria-label="Fay 3D avatar"></canvas>
+      <section class="status-card" aria-live="polite">
+        <div class="identity">
+          <span class="presence" id="presence"></span>
+          <span>Fay</span>
+        </div>
+        <p id="state">Starting renderer…</p>
+        <p id="caption"></p>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
+

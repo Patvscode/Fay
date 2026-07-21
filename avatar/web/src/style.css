@@ -1,0 +1,87 @@
+:root {
+  color: #f5f7fb;
+  background: #070b12;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+#app {
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(67, 118, 170, 0.2), transparent 40%),
+    #070b12;
+}
+
+#scene {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.status-card {
+  position: absolute;
+  left: clamp(20px, 4vw, 64px);
+  bottom: clamp(20px, 5vh, 64px);
+  max-width: min(620px, calc(100vw - 40px));
+  padding: 18px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 18px;
+  background: rgba(8, 13, 22, 0.68);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.presence {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e9a93c;
+  box-shadow: 0 0 14px currentColor;
+}
+
+.presence.connected {
+  color: #4ce39a;
+  background: currentColor;
+}
+
+#state,
+#caption {
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+
+#state {
+  color: #a9b4c7;
+  font-size: 14px;
+}
+
+#caption:empty {
+  display: none;
+}
+
+#caption {
+  font-size: clamp(17px, 2vw, 24px);
+}
+

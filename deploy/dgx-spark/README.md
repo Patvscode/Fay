@@ -25,7 +25,24 @@ The services bind to the Spark's Tailscale address by default. They are not expo
 
 Run `deploy/dgx-spark/healthcheck.py` inside the Fay virtual environment to verify the full dependency chain.
 
-The official `fay-ue5` reference client is Windows/UE 5.6. It cannot run natively on the Spark's ARM Linux host. Point a tailnet-connected Windows client at the Spark avatar WebSocket and HTTP audio URL.
+Run `deploy/dgx-spark/avatar_smoke_test.py` to register a temporary avatar,
+submit a real chat turn, and verify that the resulting speech URL can be
+downloaded. This tests the complete backend-to-renderer contract without
+requiring Unreal Engine:
+
+```bash
+cd ~/Workspace/01_Projects/Active/Fay
+set -a; source ~/.config/fay/fay.env; set +a
+.venv/bin/python deploy/dgx-spark/avatar_smoke_test.py \
+  --http-base "http://${FAY_BIND_HOST}:5000"
+```
+
+The published `fay-ue5` reference workflow is Windows/UE 5.6 and distributes a
+prebuilt Windows application separately. It cannot run natively on the Spark's
+ARM Linux host. Point that client at the Spark avatar WebSocket and HTTP audio
+URL. A separate packaged Linux ARM64 client remains a viable engineering target,
+but it is not supplied by the reference repository and must be built and tested
+independently.
 
 ## Live connection points
 
@@ -75,5 +92,24 @@ The [official architecture](https://www.fay-agent.com/) makes Fay the conversati
 Upstream Fay generates its detailed `Lips` sequence with a bundled Windows-only OVR executable. That executable cannot run on the Spark's ARM Linux host. The Spark deployment therefore supplies the renderer with working speech audio, timing, sentiment, and action signals, but does not claim server-generated OVR visemes. For a photorealistic result, run the official UE 5.6/MetaHuman client on a tailnet-connected Windows RTX machine and animate from the received audio, or add a supported facial-animation service such as Audio2Face between Fay and Unreal.
 
 NVIDIA's current [Audio2Face-3D support matrix](https://docs.nvidia.com/ace/audio2face-3d-microservice/latest/text/support-matrix.html) does not list the DGX Spark GB10 as a pre-generated profile. It should be treated as a separate, validated integration project rather than silently added to this reliable base deployment.
+
+## Free MetaHuman test character
+
+The first renderer milestone uses a female preset included with MetaHuman
+Creator Core Data. Face, body, rig, basic hair, and basic clothing are assembled
+from Epic's included content; no Fab character, clothing, or groom is required.
+The appearance is intentionally kept separate from the Fay protocol so another
+included preset can be selected later without changing the backend.
+
+Build the renderer in this order:
+
+1. Included female MetaHuman preset with an optimized assembly.
+2. Idle, blink, breathing, and one gesture montage.
+3. WebSocket registration using `{"Username":"User","Output":true}`.
+4. Download and play each `Data.HttpValue` WAV in message order.
+5. Drive a basic jaw-open value from audio amplitude.
+6. Map `Data.Sentiment` and `Data.Action` to expressions and montages.
+7. Package for Linux ARM64, then validate Vulkan, audio, and reconnect behavior
+   on the Spark.
 
 The services have no application-layer authentication in this configuration. They are intentionally bound only to the Spark's Tailscale address; do not change the bind host to `0.0.0.0` without adding authentication and firewall rules.

@@ -48,6 +48,7 @@ import fay_booter
 from flask_httpauth import HTTPBasicAuth
 from core import qa_service
 from core import stream_manager
+from core.avatar_action import build_avatar_action_message, normalize_avatar_action
 
 # 文字接口读取回复流时的空闲超时（秒）：连续这么久读不到任何数据则判定异常并收尾，
 # 避免因结束标记(_<isend>)丢失导致 /v1/chat/completions 永久挂起。
@@ -1650,6 +1651,34 @@ def transparent_pass():
         return jsonify({'code': 500, 'message': '\u672a\u77e5\u539f\u56e0\u51fa\u9519'})
     except Exception as e:
         return jsonify({'code': 500, 'message': f'\u51fa\u9519: {e}'}), 500
+
+
+@__app.route('/api/avatar/action', methods=['POST'])
+def avatar_action():
+    """Send one validated presentation action to an attached avatar."""
+    try:
+        data = request.get_json(silent=True) or {}
+        if not isinstance(data, dict):
+            return jsonify({'ok': False, 'error': 'JSON object required'}), 400
+
+        action = normalize_avatar_action(
+            data.get('behavior'),
+            data.get('intensity', 0.5),
+            data.get('duration', 1.0),
+        )
+        username = str(data.get('user', 'User') or 'User').strip() or 'User'
+        server = wsa_server.get_instance()
+        if server is None or not server.is_connected(username):
+            return jsonify({'ok': False, 'error': 'avatar renderer is not connected'}), 503
+
+        server.add_cmd(build_avatar_action_message(username=username, **action))
+        return jsonify({'ok': True, **action})
+    except ValueError as exc:
+        return jsonify({'ok': False, 'error': str(exc)}), 400
+    except Exception:
+        util.log(1, 'avatar', 'Avatar action dispatch failed')
+        return jsonify({'ok': False, 'error': 'avatar action dispatch failed'}), 500
+
 @__app.route('/api/clear-memory', methods=['POST'])
 def api_clear_memory():
     try:
