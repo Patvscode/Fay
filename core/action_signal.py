@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -23,6 +24,20 @@ class ActionRule:
 
 def _normalize_text(text: str) -> str:
     return (text or "").strip().lower()
+
+
+def _keyword_matches(normalized_text: str, keyword: str) -> bool:
+    normalized_keyword = keyword.strip().lower()
+    if not normalized_keyword:
+        return False
+    # English keywords must be complete tokens. A raw substring check made the
+    # reject keyword "no" fire inside ordinary words such as "now". CJK and
+    # punctuation-bearing phrases retain substring matching because they do
+    # not use the same whitespace/token boundary convention.
+    if re.fullmatch(r"[a-z0-9_]+", normalized_keyword):
+        pattern = rf"(?<![a-z0-9_]){re.escape(normalized_keyword)}(?![a-z0-9_])"
+        return re.search(pattern, normalized_text) is not None
+    return normalized_keyword in normalized_text
 
 
 @lru_cache(maxsize=1)
@@ -64,7 +79,7 @@ def resolve_action_signal(text: str) -> Optional[Dict[str, object]]:
 
     for rule in load_action_rules():
         matched_keywords = [
-            keyword for keyword in rule.keywords if keyword.lower() in normalized
+            keyword for keyword in rule.keywords if _keyword_matches(normalized, keyword)
         ]
         if not matched_keywords:
             continue
