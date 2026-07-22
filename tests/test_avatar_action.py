@@ -2,6 +2,7 @@ import unittest
 
 from core.avatar_action import (
     ALLOWED_BEHAVIORS,
+    ALLOWED_MOTION_PROVIDERS,
     build_avatar_action_message,
     normalize_avatar_action,
 )
@@ -24,6 +25,23 @@ class AvatarActionTests(unittest.TestCase):
         for args in (("dance", 0.5, 1.0), ("wave", float("nan"), 1.0), ("wave", 0.5, 20.0)):
             with self.assertRaises(ValueError):
                 normalize_avatar_action(*args)
+
+    def test_provider_hint_is_bounded_and_carried_to_the_renderer(self):
+        for provider in ALLOWED_MOTION_PROVIDERS:
+            action = normalize_avatar_action("wave", provider=provider)
+            self.assertEqual(action["provider"], provider)
+            message = build_avatar_action_message("wave", provider=provider)
+            self.assertEqual(message["Data"]["Action"]["provider"], provider)
+
+        for provider in ("ardy", "auto", "", 1, False):
+            with self.assertRaisesRegex(ValueError, "provider"):
+                normalize_avatar_action("wave", provider=provider)
+
+    def test_missing_provider_preserves_legacy_hybrid_wire_contract(self):
+        action = normalize_avatar_action("wave")
+        message = build_avatar_action_message("wave")
+        self.assertNotIn("provider", action)
+        self.assertNotIn("provider", message["Data"]["Action"])
 
 
 if __name__ == "__main__":

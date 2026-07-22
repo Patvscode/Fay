@@ -309,6 +309,14 @@ TOOLS: list[Tool] = [
                     "type": "number", "minimum": 0.2, "maximum": 10.0,
                     "default": 1.0,
                 },
+                "provider": {
+                    "type": "string",
+                    "enum": ["baked", "hybrid"],
+                    "description": (
+                        "Optional renderer routing hint. baked forces deterministic "
+                        "local motion; hybrid retains normal generated-motion fallback."
+                    ),
+                },
             },
             "required": ["behavior"],
         },
@@ -427,6 +435,8 @@ async def _send_broadcast(payload: Dict[str, Any]) -> Tuple[bool, str]:
 
 
 async def _send_avatar_action(arguments: Dict[str, Any]) -> Tuple[bool, str]:
+    if not set(arguments).issubset({"behavior", "intensity", "duration", "provider"}):
+        return False, "avatar action contains unsupported fields"
     allowed = {
         "idle", "listen", "wave", "invite", "think",
         "warn", "nod", "shake", "explain",
@@ -441,16 +451,23 @@ async def _send_avatar_action(arguments: Dict[str, Any]) -> Tuple[bool, str]:
         return False, "intensity and duration must be numbers"
     if not (0.0 <= intensity <= 1.0) or not (0.2 <= duration <= 10.0):
         return False, "action bounds are invalid"
+    provider = arguments.get("provider")
+    if provider is not None:
+        if not isinstance(provider, str) or provider not in {"baked", "hybrid"}:
+            return False, "provider must be baked or hybrid"
 
     def _post() -> Tuple[bool, str]:
+        payload: Dict[str, Any] = {
+            "behavior": behavior,
+            "intensity": intensity,
+            "duration": duration,
+            "user": DEFAULT_USER,
+        }
+        if provider is not None:
+            payload["provider"] = provider
         response = requests.post(
             DEFAULT_AVATAR_ACTION_API,
-            json={
-                "behavior": behavior,
-                "intensity": intensity,
-                "duration": duration,
-                "user": DEFAULT_USER,
-            },
+            json=payload,
             timeout=REQUEST_TIMEOUT,
         )
         try:

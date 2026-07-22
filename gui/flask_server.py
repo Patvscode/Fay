@@ -1665,6 +1665,7 @@ def avatar_action():
             data.get('behavior'),
             data.get('intensity', 0.5),
             data.get('duration', 1.0),
+            data.get('provider'),
         )
         username = str(data.get('user', 'User') or 'User').strip() or 'User'
         server = wsa_server.get_instance()

@@ -17,12 +17,14 @@ ALLOWED_BEHAVIORS: Tuple[str, ...] = (
     "shake",
     "explain",
 )
+ALLOWED_MOTION_PROVIDERS: Tuple[str, ...] = ("baked", "hybrid")
 
 
 def normalize_avatar_action(
     behavior: Any,
     intensity: Any = 0.5,
     duration: Any = 1.0,
+    provider: Any = None,
 ) -> Dict[str, object]:
     """Return a bounded action or raise ValueError for untrusted input."""
 
@@ -44,36 +46,50 @@ def normalize_avatar_action(
     if not 0.2 <= normalized_duration <= 10.0:
         raise ValueError("duration must be between 0.2 and 10 seconds")
 
-    return {
+    action: Dict[str, object] = {
         "behavior": normalized_behavior,
         "intensity": normalized_intensity,
         "duration": normalized_duration,
     }
+    # Missing provider is the legacy contract and deliberately keeps the
+    # renderer's normal hybrid routing. An explicit hint is narrow and exact.
+    if provider is not None:
+        if not isinstance(provider, str):
+            raise ValueError("provider must be baked or hybrid")
+        normalized_provider = provider.strip().lower()
+        if normalized_provider not in ALLOWED_MOTION_PROVIDERS:
+            raise ValueError("provider must be baked or hybrid")
+        action["provider"] = normalized_provider
+    return action
 
 
 def build_avatar_action_message(
     behavior: Any,
     intensity: Any = 0.5,
     duration: Any = 1.0,
+    provider: Any = None,
     *,
     username: str = "User",
 ) -> Dict[str, object]:
     """Build the narrow Fay-to-renderer action-only message."""
 
-    action = normalize_avatar_action(behavior, intensity, duration)
+    action = normalize_avatar_action(behavior, intensity, duration, provider)
+    wire_action: Dict[str, object] = {
+        "code": f"mcp.{action['behavior']}",
+        "behavior": action["behavior"],
+        "affect": "neutral",
+        "intensity": action["intensity"],
+        "priority": 50,
+        "sentimentHint": 0.0,
+    }
+    if "provider" in action:
+        wire_action["provider"] = action["provider"]
     return {
         "Topic": "human",
         "Data": {
             "Key": "action",
             "Time": action["duration"],
-            "Action": {
-                "code": f"mcp.{action['behavior']}",
-                "behavior": action["behavior"],
-                "affect": "neutral",
-                "intensity": action["intensity"],
-                "priority": 50,
-                "sentimentHint": 0.0,
-            },
+            "Action": wire_action,
         },
         "Username": (username or "User").strip() or "User",
     }
