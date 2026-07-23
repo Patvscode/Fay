@@ -10,6 +10,7 @@ import sys
 import threading
 import inspect
 import time
+import psutil
 from contextlib import AsyncExitStack
 from typing import Optional, Dict, Any, Tuple, List, Callable
 
@@ -777,15 +778,36 @@ class McpClient:
                             except Exception as e:
                                 logger.debug(f"终止进程 {pid} 失败: {e}")
             else:
-                # Unix: 使用 pkill 终止
-                try:
-                    subprocess.run(
-                        ["pkill", "-f", match_pattern],
-                        capture_output=True, timeout=5
-                    )
-                    logger.info(f"强制终止匹配 '{match_pattern}' 的进程")
-                except Exception as e:
-                    logger.debug(f"pkill 执行失败: {e}")
+                # Unix: only terminate matching descendants of this Fay process.
+                # A broad ``pkill -f`` is unsafe here: valid MCP configurations
+                # commonly produce generic patterns such as ``--transport`` or
+                # ``server.py``, which can match unrelated services.
+                target_paths = []
+                for value in [command, *args]:
+                    value = str(value or "").strip()
+                    if value and os.path.isabs(value):
+                        target_paths.append(os.path.realpath(value))
+
+                matched = []
+                if target_paths:
+                    for child in psutil.Process(os.getpid()).children(recursive=True):
+                        try:
+                            command_line = [os.path.realpath(part) if os.path.isabs(part) else part
+                                            for part in child.cmdline()]
+                            if any(path in command_line for path in target_paths):
+                                child.terminate()
+                                matched.append(child)
+                        except (psutil.NoSuchProcess, psutil.AccessDenied):
+                            continue
+
+                _gone, alive = psutil.wait_procs(matched, timeout=3)
+                for child in alive:
+                    try:
+                        child.kill()
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
+                if matched:
+                    logger.info("Terminated MCP child processes: %s", [child.pid for child in matched])
         except Exception as e:
             logger.debug(f"强制终止 stdio 子进程失败: {e}")
 
@@ -801,4 +823,3 @@ class McpClient:
         # 确保 stdio 子进程被终止
         self._kill_stdio_process()
         return True
-

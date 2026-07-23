@@ -9,6 +9,7 @@ Fay broadcast MCP server (SSE transport).
 - FAY_BROADCAST_API    默认 http://127.0.0.1:5000/transparent-pass
 - FAY_BROADCAST_USER   默认 User
 - FAY_BROADCAST_TIMEOUT 默认 10
+- FAY_AVATAR_ACTION_API 默认 http://127.0.0.1:5000/api/avatar/action
 - FAY_MCP_SSE_HOST     默认 0.0.0.0
 - FAY_MCP_SSE_PORT     默认 8765
 - FAY_MCP_SSE_PATH     SSE 路径（默认 /sse）
@@ -18,6 +19,7 @@ Fay broadcast MCP server (SSE transport).
 import asyncio
 import logging
 import os
+import re
 import sys
 import json
 from typing import Any, Dict, Tuple, List, Optional
@@ -68,6 +70,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 SERVER_NAME = "fay_broadcast"
 
 DEFAULT_API_URL = os.environ.get("FAY_BROADCAST_API", "http://127.0.0.1:5000/transparent-pass")
+DEFAULT_AVATAR_ACTION_API = os.environ.get(
+    "FAY_AVATAR_ACTION_API", "http://127.0.0.1:5000/api/avatar/action"
+)
 DEFAULT_USER = os.environ.get("FAY_BROADCAST_USER", "User")
 DEFAULT_SPEAKER = os.environ.get("FAY_BROADCAST_SPEAKER", "\u5e7f\u64ad\u6d88\u606f")
 REQUEST_TIMEOUT = float(os.environ.get("FAY_BROADCAST_TIMEOUT", "10"))
@@ -279,6 +284,43 @@ TOOLS: list[Tool] = [
             "required": [],
         },
     ),
+    Tool(
+        name="avatar_perform_action",
+        description=(
+            "Ask the connected avatar to perform one reviewed presentation action. "
+            "This does not accept free-form motion prompts or pose data."
+        ),
+        inputSchema={
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "behavior": {
+                    "type": "string",
+                    "enum": [
+                        "idle", "listen", "wave", "invite", "think",
+                        "warn", "nod", "shake", "explain",
+                    ],
+                },
+                "intensity": {
+                    "type": "number", "minimum": 0.0, "maximum": 1.0,
+                    "default": 0.5,
+                },
+                "duration": {
+                    "type": "number", "minimum": 0.2, "maximum": 10.0,
+                    "default": 1.0,
+                },
+                "provider": {
+                    "type": "string",
+                    "enum": ["baked", "hybrid"],
+                    "description": (
+                        "Optional renderer routing hint. baked forces deterministic "
+                        "local motion; hybrid retains normal generated-motion fallback."
+                    ),
+                },
+            },
+            "required": ["behavior"],
+        },
+    ),
     *_MEMORY_TOOLS,
 ]
 
@@ -327,7 +369,7 @@ def _parse_arguments(arguments: Dict[str, Any]) -> Tuple[str, str, str, str, boo
 def _build_aggregated_tools() -> List[Tool]:
     """
     将 Fay 已连接的 MCP 工具聚合，对外暴露为 namespaced 名称：
-    <server_id>:<tool_name>
+    server_<server_id>__<tool_name>
     """
     tools: List[Tool] = []
     _aggregated_index.clear()
@@ -339,7 +381,8 @@ def _build_aggregated_tools() -> List[Tool]:
         tool_name = entry.get("name")
         if server_id is None or not tool_name:
             continue
-        agg_name = f"{server_id}:{tool_name}"
+        safe_tool_name = re.sub(r"[^A-Za-z0-9_.-]", "_", str(tool_name))
+        agg_name = f"server_{server_id}__{safe_tool_name}"
         desc = entry.get("description", "")
         server_label = server_name_map.get(server_id, f"Server {server_id}")
         agg_desc = f"{desc} [via {server_label}]"
@@ -391,6 +434,56 @@ async def _send_broadcast(payload: Dict[str, Any]) -> Tuple[bool, str]:
         return False, f"{type(e).__name__}: {e}"
 
 
+async def _send_avatar_action(arguments: Dict[str, Any]) -> Tuple[bool, str]:
+    if not set(arguments).issubset({"behavior", "intensity", "duration", "provider"}):
+        return False, "avatar action contains unsupported fields"
+    allowed = {
+        "idle", "listen", "wave", "invite", "think",
+        "warn", "nod", "shake", "explain",
+    }
+    behavior = str(arguments.get("behavior", "") or "").strip().lower()
+    if behavior not in allowed:
+        return False, "behavior is not allowlisted"
+    try:
+        intensity = float(arguments.get("intensity", 0.5))
+        duration = float(arguments.get("duration", 1.0))
+    except (TypeError, ValueError):
+        return False, "intensity and duration must be numbers"
+    if not (0.0 <= intensity <= 1.0) or not (0.2 <= duration <= 10.0):
+        return False, "action bounds are invalid"
+    provider = arguments.get("provider")
+    if provider is not None:
+        if not isinstance(provider, str) or provider not in {"baked", "hybrid"}:
+            return False, "provider must be baked or hybrid"
+
+    def _post() -> Tuple[bool, str]:
+        payload: Dict[str, Any] = {
+            "behavior": behavior,
+            "intensity": intensity,
+            "duration": duration,
+            "user": DEFAULT_USER,
+        }
+        if provider is not None:
+            payload["provider"] = provider
+        response = requests.post(
+            DEFAULT_AVATAR_ACTION_API,
+            json=payload,
+            timeout=REQUEST_TIMEOUT,
+        )
+        try:
+            body = response.json()
+        except Exception:
+            body = {}
+        if response.ok and body.get("ok") is True:
+            return True, f"avatar action accepted: {behavior}"
+        return False, str(body.get("error") or f"HTTP {response.status_code}")
+
+    try:
+        return await asyncio.to_thread(_post)
+    except Exception as exc:
+        return False, f"{type(exc).__name__}: {exc}"
+
+
 async def _handle_call_tool(name: str, arguments: Dict[str, Any]) -> list[TextContent]:
     # 本地广播
     if name == "broadcast_message":
@@ -410,6 +503,11 @@ async def _handle_call_tool(name: str, arguments: Dict[str, Any]) -> list[TextCo
 
         ok, message = await _send_broadcast(payload)
         prefix = "成功" if ok else "失败"
+        return [_text_content(f"{prefix}: {message}")]
+
+    if name == "avatar_perform_action":
+        ok, message = await _send_avatar_action(arguments or {})
+        prefix = "success" if ok else "error"
         return [_text_content(f"{prefix}: {message}")]
 
     # 记忆工具：全部代理到 core.memory_service，进程内直接调用，不走 HTTP

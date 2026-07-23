@@ -16,7 +16,10 @@ from typing import Any, Dict, Mapping
 
 _lock = threading.RLock()
 _prestart: Dict[int, Dict[str, Dict[str, Any]]] = {}
-_data_file = os.path.join(os.path.dirname(__file__), "data", "mcp_prestart_tools.json")
+_data_dir = os.path.abspath(os.path.expanduser(
+    os.environ.get("FAY_MCP_DATA_DIR", os.path.join(os.path.dirname(__file__), "data"))
+))
+_data_file = os.path.join(_data_dir, "mcp_prestart_tools.json")
 
 
 def _ensure_loaded() -> None:
@@ -119,4 +122,3 @@ def is_prestart(server_id: int, tool_name: str) -> bool:
     _ensure_loaded()
     with _lock:
         return tool_name in _prestart.get(int(server_id), {})
-

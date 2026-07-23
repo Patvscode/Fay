@@ -9,6 +9,8 @@
 
 Fay explores practical, device-oriented digital-human applications and makes those ideas available as a complete open-source implementation. The framework can work with a variety of digital-human rendering technologies and large language models, makes components such as TTS and ASR easy to replace, and exposes a comprehensive set of APIs for microcontrollers, apps, websites, and other products.
 
+This fork includes a tested, tailnet-only [DGX Spark deployment](deploy/dgx-spark/README.md) using a resident local model, Voxtral speech, persistent memory, systemd, and MCP.
+
 - [Changelog](https://qqk9ntwbcit.feishu.cn/wiki/UlbZwfAXgiKSquk52AkcibhHngg)
 - [Documentation](https://qqk9ntwbcit.feishu.cn/wiki/JzMJw7AghiO8eHktMwlcxznenIg)
 

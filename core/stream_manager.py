@@ -105,7 +105,16 @@ class StreamManager:
         """
         # 使用stream_lock保护流的读写操作
         with self.stream_lock:
+            self.running = True
             return self._get_Stream_internal(username)
+
+    def stop(self):
+        """Cooperatively stop per-user sentence listeners during service shutdown."""
+        self.running = False
+        for thread in list(self.listener_threads.values()):
+            if thread.is_alive():
+                thread.join(timeout=1)
+        self.listener_threads.clear()
 
     def write_sentence(self, username, sentence, conversation_id=None, session_version=None):
         """

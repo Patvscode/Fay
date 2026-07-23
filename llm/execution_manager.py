@@ -9,6 +9,7 @@
 
 import enum
 import json
+import os
 import re
 import threading
 import time
@@ -176,6 +177,13 @@ def _get_llm_instance(role: str = "small", streaming: bool = True) -> ChatOpenAI
     role="small" → 使用 system.conf 中的 gpt_* 配置
     """
     cfg.load_config()
+    max_tokens = max(128, int(os.environ.get("FAY_LLM_MAX_TOKENS", "1024")))
+    extra_body = None
+    if os.environ.get("FAY_LLM_DISABLE_THINKING", "0").strip().lower() in {"1", "true", "yes", "on"}:
+        extra_body = {
+            "chat_template_kwargs": {"enable_thinking": False},
+            "thinking_budget_tokens": 0,
+        }
 
     if role == "big":
         if cfg.big_model_engine:
@@ -187,6 +195,8 @@ def _get_llm_instance(role: str = "small", streaming: bool = True) -> ChatOpenAI
                 base_url=actual_base_url,
                 api_key=actual_api_key,
                 streaming=streaming,
+                max_tokens=max_tokens,
+                extra_body=extra_body,
                 timeout=120,
                 max_retries=2,
             )
@@ -200,6 +210,8 @@ def _get_llm_instance(role: str = "small", streaming: bool = True) -> ChatOpenAI
         base_url=cfg.gpt_base_url,
         api_key=cfg.key_gpt_api_key,
         streaming=streaming,
+        max_tokens=max_tokens,
+        extra_body=extra_body,
         timeout=60,
         max_retries=1,
     )

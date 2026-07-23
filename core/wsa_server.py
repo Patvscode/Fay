@@ -195,9 +195,11 @@ class MyServer:
         if self.__server:
             util.log(1, 'server already exist')
             return
-        self.__server = websockets.serve(self.__handler, self.__host, self.__port, ping_interval=10, ping_timeout=5)
-        asyncio.get_event_loop().run_until_complete(self.__server)
-        asyncio.get_event_loop().run_forever()
+        server_factory = websockets.serve(
+            self.__handler, self.__host, self.__port, ping_interval=10, ping_timeout=5
+        )
+        self.__server = self.__event_loop.run_until_complete(server_factory)
+        self.__event_loop.run_forever()
 
     # 往要发送的命令列表中，添加命令
     def add_cmd(self, content):
@@ -216,9 +218,20 @@ class MyServer:
     def stop_server(self):
         self.__running = False
         self.isConnect = False
-        if self.__server is None:
-            return
-        self.__server.close()
+        server = self.__server
+        event_loop = self.__event_loop
+        if server is not None and event_loop is not None and event_loop.is_running():
+            async def close_server():
+                server.close()
+                await server.wait_closed()
+
+            try:
+                future = asyncio.run_coroutine_threadsafe(close_server(), event_loop)
+                future.result(timeout=3)
+            except Exception as exc:
+                util.log(1, f"WebSocket server close warning: {exc}")
+            finally:
+                event_loop.call_soon_threadsafe(event_loop.stop)
         self.__server = None
         self.__clients = []
         util.log(1, "WebSocket server stopped.")

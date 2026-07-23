@@ -114,7 +114,20 @@ def cleanup_on_exit():
         util.log(1, '程序退出，正在清理资源...')
         if fay_booter.is_running():
             fay_booter.stop()
-        
+
+        # These WebSocket servers are started by main rather than fay_booter,
+        # so stop their event loops explicitly before the thread manager runs.
+        for websocket_server in (wsa_server.get_instance(), wsa_server.get_web_instance()):
+            if websocket_server is not None:
+                websocket_server.stop_server()
+
+        flask_server.stop()
+        try:
+            from faymcp import mcp_service
+            mcp_service.stop()
+        except Exception as exc:
+            util.log(1, f'MCP HTTP service stop warning: {exc}')
+
         # 停止所有自定义线程
         try:
             from scheduler.thread_manager import stopAll
@@ -151,8 +164,9 @@ def signal_handler(signum, frame):
     cleanup_thread = threading.Thread(target=cleanup_and_exit, daemon=True)
     cleanup_thread.start()
     
-    # 如果清理线程超过5秒还没完成，强制退出
-    cleanup_thread.join(timeout=5.0)
+    # Stay within systemd's 20-second stop budget while allowing memory and
+    # subprocess cleanup to finish on a busy host.
+    cleanup_thread.join(timeout=15.0)
     if cleanup_thread.is_alive():
         util.log(1, '清理超时，立即强制退出...')
         os._exit(1)
@@ -282,11 +296,12 @@ if __name__ == '__main__':
     contentdb.init_db()
 
     #启动数字人接口服务
-    ws_server = wsa_server.new_instance(port=10002)
+    bind_host = os.environ.get("FAY_BIND_HOST", "0.0.0.0")
+    ws_server = wsa_server.new_instance(host=bind_host, port=10002)
     ws_server.start_server()
 
     #启动UI数据接口服务
-    web_ws_server = wsa_server.new_web_instance(port=10003)
+    web_ws_server = wsa_server.new_web_instance(host=bind_host, port=10003)
     web_ws_server.start_server()
 
     #启动阿里云asr

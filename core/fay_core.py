@@ -124,6 +124,12 @@ elif cfg.tts_module == 'volcano':
     from tts.volcano_tts import Speech
 
 
+elif cfg.tts_module == 'openai':
+
+
+    from tts.openai_compatible import Speech
+
+
 else:
 
 

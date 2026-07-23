@@ -3,7 +3,11 @@ import time
 import os
 import re
 import asyncio
-import pyaudio
+import threading
+try:
+    import pyaudio
+except ImportError:
+    pyaudio = None
 import socket
 import requests
 from core.interact import Interact
@@ -25,6 +29,7 @@ ngrok = None
 socket_service_instance = None
 mcp_sse_server = None
 mcp_sse_thread = None
+_shutdown_event = threading.Event()
 # 是否启用内置 MCP SSE 服务器（默认关闭，需显式开启以避免端口/代理问题）
 mcp_sse_enabled = True
 
@@ -42,7 +47,7 @@ class RecorderListener(Recorder):
 
     def __init__(self, device, fei):
         self.__device = device
-        self.__FORMAT = pyaudio.paInt16
+        self.__FORMAT = pyaudio.paInt16 if pyaudio is not None else 8
         self.__running = False
         self.username = 'User'
         # 这两个参数会在 get_stream 中根据实际设备更新
@@ -58,12 +63,18 @@ class RecorderListener(Recorder):
 
     def get_stream(self):
         try:
-            while True:
+            while self.should_run():
                 config_util.load_config()
                 record = config_util.config['source']['record']
                 if record['enabled']:
                     break
                 time.sleep(0.1)
+
+            if not self.should_run():
+                return None
+
+            if pyaudio is None:
+                raise RuntimeError("PyAudio is not installed; use remote audio or install PortAudio before enabling the local microphone")
     
             self.paudio = pyaudio.PyAudio()
             
@@ -212,16 +223,18 @@ def device_socket_keep_alive():
              value =  DeviceInputListenerDict.pop(delkey)
              if wsa_server.get_web_instance().is_connected(value.username):
                 wsa_server.get_web_instance().add_cmd({"remote_audio_connect": False, "Username" : value.username})
-        time.sleep(10)
+        _shutdown_event.wait(10)
 
 #远程音频连接
 def accept_audio_device_output_connect():
     global deviceSocketServer
     global __running
     global DeviceInputListenerDict
-    deviceSocketServer = socket.socket(socket.AF_INET,socket.SOCK_STREAM) 
-    deviceSocketServer.bind(("0.0.0.0",10001))   
+    deviceSocketServer = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    deviceSocketServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    deviceSocketServer.bind((os.environ.get("FAY_BIND_HOST", "0.0.0.0"),10001))
     deviceSocketServer.listen(1)
+    deviceSocketServer.settimeout(1.0)
     MyThread(target = device_socket_keep_alive).start() # 开启心跳包检测
     addr = None        
     
@@ -298,6 +311,7 @@ def stop():
 
     util.log(1, '正在关闭服务...')
     __running = False
+    _shutdown_event.set()
 
     # 关闭 MCP SSE 服务
     try:
@@ -325,7 +339,8 @@ def stop():
     # 保存代理记忆
     util.log(1, '正在保存代理记忆...')
     try:
-        from llm.nlp_cognitive_stream import save_agent_memory
+        from llm.nlp_cognitive_stream import save_agent_memory, stop_memory_scheduler
+        stop_memory_scheduler()
         save_agent_memory()
         util.log(1, '代理记忆保存成功')
     except Exception as e:
@@ -360,6 +375,11 @@ def stop():
         pass
 
     util.log(1, '正在关闭核心服务...')
+    try:
+        from core import stream_manager
+        stream_manager.new_instance().stop()
+    except Exception as e:
+        util.log(1, f'关闭文本流监听服务时异常: {e}')
     feiFei.stop()
     util.log(1, '服务已关闭！')
 
@@ -375,6 +395,7 @@ def start():
     
     util.log(1, '开启服务...')
     __running = True
+    _shutdown_event.clear()
 
     #读取配置
     util.log(1, '读取配置...')

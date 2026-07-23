@@ -5,6 +5,7 @@ import threading
 import time
 import sys
 import traceback
+import os
 
 try:
     from utils import util
@@ -187,7 +188,7 @@ class SocketBridgeService:
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         try:
-            self.loop.run_until_complete(self.start(host='0.0.0.0', port=9001))
+            self.loop.run_until_complete(self.start(host=os.environ.get('FAY_BIND_HOST', '0.0.0.0'), port=9001))
         except OSError as e:
             _log(f"[9001] 端口绑定失败（可能被占用）: {e}")
         except Exception:

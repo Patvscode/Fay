@@ -26,10 +26,13 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 # MCP服务器数据文件路径
-MCP_DATA_FILE = os.path.join(os.path.dirname(__file__), 'data', 'mcp_servers.json')
+MCP_DATA_DIR = os.path.abspath(os.path.expanduser(
+    os.environ.get('FAY_MCP_DATA_DIR', os.path.join(os.path.dirname(__file__), 'data'))
+))
+MCP_DATA_FILE = os.path.join(MCP_DATA_DIR, 'mcp_servers.json')
 
 # MCP工具状态数据文件路径
-MCP_TOOL_STATES_FILE = os.path.join(os.path.dirname(__file__), 'data', 'mcp_tool_states.json')
+MCP_TOOL_STATES_FILE = os.path.join(MCP_DATA_DIR, 'mcp_tool_states.json')
 
 # 确保data目录存在
 os.makedirs(os.path.dirname(MCP_DATA_FILE), exist_ok=True)
@@ -1651,20 +1654,30 @@ def start_connection_check():
     schedule_connection_check()
 
 # 主程序入口
+_http_server = None
+
+
 def run():
+    global _http_server
     # 禁止服务器日志输出的类
     class NullLogHandler:
         def write(self, *args, **kwargs):
             pass
     
-    # 使用gevent的pywsgi服务器，并禁用日志输出
-    from gevent import pywsgi
-    server = pywsgi.WSGIServer(
-        ('0.0.0.0', 5010), 
-        app,
-        log=NullLogHandler()
+    from werkzeug.serving import make_server
+    _http_server = make_server(
+        os.environ.get('FAY_BIND_HOST', '0.0.0.0'), 5010, app, threaded=True
     )
-    server.serve_forever()
+    try:
+        _http_server.serve_forever()
+    finally:
+        _http_server = None
+
+
+def stop():
+    server = _http_server
+    if server is not None:
+        server.shutdown()
 
 # 启动时自动连接标记为 autostart 的服务器
 def _autostart_connect_servers():

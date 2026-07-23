@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "name": "Spark Studio Creative Platform",
+    "ip": "",
+    "connection_time": "",
+    "key": "",
+    "transport": "stdio",
+    "command": "__SPARK_STUDIO_ROOT__/scripts/run-mcp.sh",
+    "args": ["--transport", "stdio"],
+    "cwd": "__SPARK_STUDIO_ROOT__",
+    "env": {
+      "SPARK_STUDIO_URL": "http://127.0.0.1:8200"
+    },
+    "autostart": true
+  },
+  {
+    "id": 2,
+    "name": "Fay Schedule Manager",
+    "ip": "",
+    "connection_time": "",
+    "key": "",
+    "transport": "stdio",
+    "command": "python",
+    "args": ["server.py"],
+    "cwd": "mcp_servers/schedule_manager",
+    "env": {},
+    "autostart": true
+  }
+]
