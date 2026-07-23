@@ -1,13 +1,13 @@
 [Unit]
-Description=Fay Voxtral realtime ASR compatibility proxy
-After=network-online.target codex-studio-voxtral-realtime.service
-Wants=network-online.target codex-studio-voxtral-realtime.service
+Description=Fay local Whisper ASR compatibility proxy
+After=network-online.target codex-studio-v2.service
+Wants=network-online.target codex-studio-v2.service
 
 [Service]
 Type=simple
 WorkingDirectory=%h/Workspace/01_Projects/Active/Fay
 EnvironmentFile=%h/.config/fay/fay.env
-ExecStart=%h/Workspace/01_Projects/Active/Fay/.venv/bin/python deploy/dgx-spark/voxtral_asr_proxy.py
+ExecStart=%h/Workspace/01_Projects/Active/Fay/.venv/bin/python deploy/dgx-spark/whisper_asr_proxy.py
 Restart=on-failure
 RestartSec=3
 

@@ -1,7 +1,7 @@
 [Unit]
 Description=Fay digital-human and MCP runtime
-After=network-online.target fay-asr-proxy.service codex-studio-voxtral-tts.service local-model-coordinator.service spark-studio.service
-Wants=network-online.target fay-asr-proxy.service codex-studio-voxtral-tts.service local-model-coordinator.service
+After=network-online.target fay-asr-proxy.service codex-studio-qwen3-tts.service local-model-coordinator.service spark-studio.service
+Wants=network-online.target fay-asr-proxy.service codex-studio-qwen3-tts.service local-model-coordinator.service
 
 [Service]
 Type=simple
