@@ -23,6 +23,7 @@ ALLOWED_BEHAVIORS: Tuple[str, ...] = (
     "dance_relaxed",
 )
 ALLOWED_MOTION_PROVIDERS: Tuple[str, ...] = ("baked", "hybrid")
+MAX_MOTION_PROMPT_CHARS = 512
 
 
 def normalize_avatar_action(
@@ -30,6 +31,7 @@ def normalize_avatar_action(
     intensity: Any = 0.5,
     duration: Any = 1.0,
     provider: Any = None,
+    prompt: Any = None,
 ) -> Dict[str, object]:
     """Return a bounded action or raise ValueError for untrusted input."""
 
@@ -65,6 +67,13 @@ def normalize_avatar_action(
         if normalized_provider not in ALLOWED_MOTION_PROVIDERS:
             raise ValueError("provider must be baked or hybrid")
         action["provider"] = normalized_provider
+    if prompt is not None:
+        if not isinstance(prompt, str):
+            raise ValueError("prompt must be text")
+        normalized_prompt = prompt.strip()
+        if not normalized_prompt or len(normalized_prompt) > MAX_MOTION_PROMPT_CHARS:
+            raise ValueError("prompt must contain 1 to 512 characters")
+        action["prompt"] = normalized_prompt
     return action
 
 
@@ -73,12 +82,13 @@ def build_avatar_action_message(
     intensity: Any = 0.5,
     duration: Any = 1.0,
     provider: Any = None,
+    prompt: Any = None,
     *,
     username: str = "User",
 ) -> Dict[str, object]:
     """Build the narrow Fay-to-renderer action-only message."""
 
-    action = normalize_avatar_action(behavior, intensity, duration, provider)
+    action = normalize_avatar_action(behavior, intensity, duration, provider, prompt)
     wire_action: Dict[str, object] = {
         "code": f"mcp.{action['behavior']}",
         "behavior": action["behavior"],
@@ -89,6 +99,8 @@ def build_avatar_action_message(
     }
     if "provider" in action:
         wire_action["provider"] = action["provider"]
+    if "prompt" in action:
+        wire_action["prompt"] = action["prompt"]
     return {
         "Topic": "human",
         "Data": {

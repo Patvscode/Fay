@@ -43,6 +43,17 @@ class AvatarActionTests(unittest.TestCase):
         self.assertNotIn("provider", action)
         self.assertNotIn("provider", message["Data"]["Action"])
 
+    def test_free_text_motion_prompt_is_carried_without_term_classification(self):
+        prompt = "Crouch, take two careful steps, then wave with your left hand."
+        action = normalize_avatar_action("explain", prompt=prompt)
+        message = build_avatar_action_message("explain", prompt=prompt)
+        self.assertEqual(action["prompt"], prompt)
+        self.assertEqual(message["Data"]["Action"]["prompt"], prompt)
+
+        for invalid in ("", " ", 42, "x" * 513):
+            with self.assertRaisesRegex(ValueError, "prompt"):
+                normalize_avatar_action("explain", prompt=invalid)
+
 
 if __name__ == "__main__":
     unittest.main()
