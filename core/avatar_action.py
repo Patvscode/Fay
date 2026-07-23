@@ -16,6 +16,11 @@ ALLOWED_BEHAVIORS: Tuple[str, ...] = (
     "nod",
     "shake",
     "explain",
+    "jog_in_place",
+    "run_in_place",
+    "jumping_jacks",
+    "stretch",
+    "dance_relaxed",
 )
 ALLOWED_MOTION_PROVIDERS: Tuple[str, ...] = ("baked", "hybrid")
 
